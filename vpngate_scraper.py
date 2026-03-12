@@ -188,17 +188,20 @@ def main():
             times_ms, avg_sum = run_tcping(tcping_exe, ip, port, attempts=args.attempts)
             avg = avg_sum if avg_sum is not None else (sum(times_ms) / len(times_ms) if times_ms else None)
             status = "alive" if avg is not None else "dead"
-            results_rows.append(
-                {
-                    "country": country,
-                    "ip": ip,
-                    "port": port,
-                    "attempts": args.attempts,
-                    "times_ms": json.dumps(times_ms, ensure_ascii=False),
-                    "avg_ms": f"{avg:.3f}" if avg is not None else "",
-                    "status": status,
-                }
-            )
+            
+            if status == "alive":
+                results_rows.append(
+                    {
+                        "country": country,
+                        "ip": ip,
+                        "port": port,
+                        "attempts": args.attempts,
+                        "times_ms": json.dumps(times_ms, ensure_ascii=False),
+                        "avg_ms": f"{avg:.3f}" if avg is not None else "",
+                        "status": status,
+                    }
+                )
+            
             print(
                 f"结果: status={status} times={times_ms} "
                 + (f"avg={avg:.3f} ms" if avg is not None else "")
@@ -219,8 +222,9 @@ def main():
             writer.writerow(row)
 
     # 控制台展示前若干条
+    print(f"测试完成，共有 {len(results_rows)} 个存活服务器")
     for row in results_rows[:10]:
-        print(f"{row['country']} {row['ip']}:{row['port']} status={row['status']} avg={row['avg_ms']} ms")
+        print(f"{row['country']} {row['ip']}:{row['port']} avg={row['avg_ms']} ms")
 
 
 if __name__ == "__main__":
