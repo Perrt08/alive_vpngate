@@ -1,0 +1,45 @@
+name: VPNGate Scraper
+
+on:
+  schedule:
+    - cron: "0 */5 * * *"
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Setup permissions and cleanup
+        run: |
+          chmod +x tcping vpngate_scraper.py
+          rm -f vpngate_alive.csv
+
+      - name: Run scraper
+        run: |
+          python vpngate_scraper.py --limit 100 --attempts 3 --out vpngate_alive.csv
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f vpngate_alive.csv ]; then
+            git add vpngate_alive.csv
+            if git diff --staged --quiet; then
+              echo "No changes to commit"
+            else
+              git commit -m "Update vpngate_alive.csv"
+              git push origin main
+            fi
+          else
+            echo "vpngate_alive.csv not found, skipping commit"
+          fi
